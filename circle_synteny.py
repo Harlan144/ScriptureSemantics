@@ -1,3 +1,5 @@
+# Description: This script generates a synteny plot of the scriptural books and chapters based on the cosine similarity between them.
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
 import matplotlib.path as mpath
@@ -11,20 +13,24 @@ import math
 # allWorks = "standardWorksDF/allWorks.csv"
 # parsedReferenceFile="chapterTokenTensor/allBookSimilarity0.65"
 # outputSyntenyPlot= "chapterTokenTensor/allBookSimilarity0dot65"
+
+# Defines the white space between different works in the circle
 DEGREE_BETWEEN_WORKS = 2
 
-
+# Names of the works in our tsv file
 WORKNAMES = {"pearl-of-great-price":"Pearl of Great Price",
                 "old-testament": "Old Testament","book-of-mormon":"Book of Mormon",
                 "d&c":"D&C", "new-testament":"New Testament"
 }
 
-def findPosBasedOnAngle(angle, radius): #counterClockwise?
+# Function to find the x and y coordinates of a point on a circle given an angle and radius. Works counter-clockwise
+def findPosBasedOnAngle(angle, radius): 
     radianAngle= math.radians(angle)
     x=math.cos(radianAngle)*radius
     y= math.sin(radianAngle)*radius
     return x,y
 
+# Function to calculate the indexes of the works in the dataframe
 def calculate_work_indexes(allWorksDF, worksAndLens):
     workIndexes ={}
     for work,length in worksAndLens.items():
@@ -34,6 +40,7 @@ def calculate_work_indexes(allWorksDF, worksAndLens):
         workIndexes[work]= (firstIndex,lastIndex)
     return workIndexes
 
+# Function to calculate the angles of the works in the circle based on the index
 def calculate_work_angles(workIndexes, anglePerVerse):
     currentAngle =0
     workAngles= {}
@@ -44,6 +51,8 @@ def calculate_work_angles(workIndexes, anglePerVerse):
 
     return workAngles
 
+# Function to find the books in the works that have more than minBookLen verses.
+# This are colored gray and the names are omitted for clarity.
 def find_books_in_works(allWorksDF, workIndexes, minBookLen):
     totalBooks = 0
     booksInWorks = {}
@@ -56,6 +65,7 @@ def find_books_in_works(allWorksDF, workIndexes, minBookLen):
 
     return booksInWorks, totalBooks
 
+# Function to calculate the angles of the books in the circle based on the index
 def calculate_book_angles(booksInWorks, workAngles, workIndexes, allWorksDF):
     bookAngles= {}
     for work,bookList in booksInWorks.items():
@@ -76,6 +86,7 @@ def calculate_book_angles(booksInWorks, workAngles, workIndexes, allWorksDF):
 
     return bookAngles
 
+# Function to find the x and y coordinates of a point on a circle given a verse number and radius.
 def findPosFromVerseNum(verseNum, workIndexes, workAngles, circleRadius):
     for work,workRange in workIndexes.items():
         if verseNum>=workRange[0] and verseNum<workRange[1]:
@@ -89,22 +100,27 @@ def findPosFromVerseNum(verseNum, workIndexes, workAngles, circleRadius):
             versePoint= findPosBasedOnAngle(verseAngle,circleRadius*0.975)
             return versePoint
 
+# Function to graph the circle with the works and books
 def graph_circle(totalVerseCount, cosineThreshold, totalBooks, workAngles, bookAngles):
     centerOfGraph = (0,0)
     circleDiameter= totalVerseCount/math.pi #not exact.
     circleRadius =circleDiameter/2
 
+    #Add a white rectangle as a backround
     centerX= 0
     rectOnTop = plt.Rectangle((0,circleRadius*1.8), 10, 10, fc='white',ec="white")
     plt.gca().add_patch(rectOnTop)
 
+    #Add the title
     titleText= "Synteny Analysis of Similarity between Different Scriptural Books"
     plt.text(centerX,1.7*(circleRadius), titleText, ha='center', rotation=0, wrap=True, fontsize=15)
 
+    #Add the subtitle
     if cosineThreshold!=0:
         subTitleText = f"Calculated At {cosineThreshold:.2f} cosine similarity threshold"
         plt.text(centerX,1.5*(circleRadius), subTitleText, ha='center', rotation=0, wrap=True, fontsize=8)
 
+    #Add the works
     color = iter(cm.rainbow(np.linspace(0, 1, totalBooks)))
     for work, angles in workAngles.items():
         arc= mpatch.Arc(centerOfGraph,
@@ -120,7 +136,7 @@ def graph_circle(totalVerseCount, cosineThreshold, totalBooks, workAngles, bookA
         textAngle = (angles[1]+angles[0])/2
         textX, textY= findPosBasedOnAngle(textAngle,circleRadius*1.32)
 
-
+        #Fix the text rotation so it doesn't overlap
         if textAngle<180:#OLD TEST
             plt.text(textX+500, textY, WORKNAMES[work], ha='center', rotation=0, wrap=True, fontsize=7)
         elif textAngle>350: #POGP
@@ -130,7 +146,7 @@ def graph_circle(totalVerseCount, cosineThreshold, totalBooks, workAngles, bookA
         else:
             plt.text(textX, textY, WORKNAMES[work], ha='center', rotation=0, wrap=True,fontsize=7)
 
-
+    #Add the books
     for work, bookDic in bookAngles.items():
             for book, bookAngles in bookDic.items():
                 c = next(color)
@@ -149,6 +165,7 @@ def graph_circle(totalVerseCount, cosineThreshold, totalBooks, workAngles, bookA
                 textX, textY= findPosBasedOnAngle(textAngle,circleRadius*1.03)
                 plt.text(textX, textY, book, ha='left', rotation=textAngle, wrap=True, fontsize=3)
 
+# Function to check if two verses are in the same work
 def in_same_work(verse1, verse2, workIndexes):
     for __, workRange in workIndexes.items():
         if verse1>=workRange[0] and verse1<workRange[1]:
@@ -156,6 +173,7 @@ def in_same_work(verse1, verse2, workIndexes):
                 return True
     return False
 
+# Function to parse the reference file to include the references of the verses
 def parse_reference_file(cosineSimilarityFile, parsedReferenceFile, workIndexes, cosineThreshold, includeOnlyFirst):
     outputLines = []
     with open(cosineSimilarityFile) as similarityFile:
@@ -188,7 +206,7 @@ def parse_reference_file(cosineSimilarityFile, parsedReferenceFile, workIndexes,
             file.write(line)
     return 
 
-
+# Function to graph the lines between the verses. Uses bezier curves.
 def graph_lines(parsedReferenceFile, totalVerseCount, workIndexes, workAngles):
     Path= mpath.Path
 
@@ -208,7 +226,8 @@ def graph_lines(parsedReferenceFile, totalVerseCount, workIndexes, workAngles):
                                                     fc="none", linewidth=0.1)
                                                 
                 plt.gca().add_patch(bezierCurve)
-                
+
+#Main function that graphs the circle synteny plot.  
 def circleSyntenyGraph(allWorks,cosineSimilarityFile, outputSyntenyPlot, parsedReferenceFile, includeOnlyFirst =False,minBookLen=200,cosineThreshold=0):
 
     allWorksDF= pd.read_csv(allWorks)

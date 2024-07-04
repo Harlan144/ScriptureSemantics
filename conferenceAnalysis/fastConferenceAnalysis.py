@@ -1,16 +1,19 @@
 """For each year of general conference talks, analyze how often the talks contain primary references to 
 differet works of scripture. Visualize these results."""
-import sys
 import json
 import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 
+#Import the best performing model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 with open("datasets/all_references.json", "r") as readFile:
     allRef = json.load(readFile)
+
+#List of all verses
 verses_references = list(allRef.keys())
 
+#This function will take in a list of paragraphs and a list of verses and return the top 3 verses that are most similar to each paragraph
 def matrix_cosine_sim(paragraph_embeddings, verse_embeddings, verse_references, threshold):
     num_paragraphs = len(paragraph_embeddings)
     # num_verses = len(verse_embeddings)
@@ -53,6 +56,7 @@ def matrix_cosine_sim(paragraph_embeddings, verse_embeddings, verse_references, 
 
     return matches
 
+#Hard code in the different books of scripture
 gospelsList = set(["Matthew", "Mark", "Luke", "John"])
 oldTestamentList = set(["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Solomon's Song", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", 
 "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"])
@@ -61,9 +65,13 @@ doctrineCovList = set(["D&C"])
 pearlOfGreatPrice = set(["Moses", "Joseph Smith—History", "Abraham", "Joseph Smith\u2014Matthew", "Joseph Smith—Matthew", "Joseph Smith\u2014History", "Articles of Faith"])
 secondHalfNewTestamentList = set(["Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"])
 newTestamenSet = gospelsList.union(secondHalfNewTestamentList)
+
+#Load in the embeddings across the scriptures using the best performing model
 verseEmbeddings = torch.load("modelTensors/all-MiniLM-L6-v2_with_punc.pt")
 
-# yearOfInterest = sys.argv[1]
+
+#Iterate through all the years of general conference and analyze the references to scripture
+#Determine which book each reference is from
 for yearOfInterest in range(1880, 2024):
     yearOfInterest = str(yearOfInterest)
     paragraphsToSearch = []
@@ -153,11 +161,12 @@ for yearOfInterest in range(1880, 2024):
         numRefDC += bookRefDict[f"D&C {i}"]
     for book in pearlOfGreatPrice:
         numPGP += bookRefDict[book]
-
+    
+    #Write the results to a file
     with open(f"conferenceAnalysis/conferenceResults/reviewReferences{yearOfInterest}.tsv", "w") as writeFile:
         for match in verses:
             writeFile.write(f"{paragraphsToSearch[match['paragraph_index']]}\t{match['reference']}\t{match['similarity_score']}\n")
-
+    #Write the specific verse references to files
     with open(f"conferenceAnalysis/conferenceResults/conferenceResults{yearOfInterest}.tsv", "w") as recordFile:
         recordFile.write(f"New Testament\t{yearOfInterest}\t{numRefGosp + numRef2NT}\n")
         recordFile.write(f"Gospels\t{yearOfInterest}\t{numRefGosp}\n")

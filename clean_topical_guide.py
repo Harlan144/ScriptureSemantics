@@ -1,8 +1,9 @@
+# Description: This script cleans the topical guide json file. It removes the commas and hyphens from the verses and converts the chapters to verses.
 import json
 import re
 import pandas as pd
 
-
+#Function to split the book and chapter
 def work_chapter_split(input_string):
     #Regular expression pattern to split the string
     pattern = r'(.+)\s(\d+.*)' #This pattern matches the name and the number
@@ -17,6 +18,7 @@ def work_chapter_split(input_string):
         print(input_string, "Pattern not matched.")
         return None
 
+#Function to clean the commas from the references. Seperates each verse into a different entry.
 def clean_commas(input, output):
     with open(input, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -68,7 +70,7 @@ def clean_commas(input, output):
         json.dump(outputDict, f)
 
 
-
+#Function to clean the hyphens from the references. Seperates each verse into a different entry.
 def clean_json_hyphens(input, output):
     with open(input, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -115,6 +117,7 @@ def clean_json_hyphens(input, output):
     with open(output, 'w') as f:
         json.dump(outputDict, f)
 
+# Function to convert chapters to verses. Separates each verse from a chapter into a separate entry.
 def clean_json_chapters_to_verses(input, output, all_Verses):
     with open(input, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -144,6 +147,7 @@ def clean_json_chapters_to_verses(input, output, all_Verses):
     with open(output, 'w') as f:
         json.dump(outputDict, f)
 
+# Function to modify the json file to include the index of the verses in the all_Verses file.
 def modify_json(input, output, all_Verses):
     with open(input, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -170,7 +174,7 @@ def modify_json(input, output, all_Verses):
     with open(output, 'w') as f:
         json.dump(outputDict, f)
 
-    
+# Function to limit the topical guide to only include the training topics.
 def limit_topical_guide(topical_guide_path, training_topics, output_topical_guide_path, training=True):
     topics = []
     with open(training_topics, 'r') as f:

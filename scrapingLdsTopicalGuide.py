@@ -1,5 +1,6 @@
-#Checked LDS robot.txt file it appears I can legally scrape (or attempt to)
+#Checked LDS robot.txt file. It appears we can legally scrape (or attempt to)
 #With aide from chat GPT:
+
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import sys
@@ -56,7 +57,6 @@ except:
     print("Error in", num)
 # with open("topical_guide.json", "w") as jsonFile:
 #     jsonFile.write(json.dumps(topics))
-
 
 cleanerTG = dict()
 for topic in topics:

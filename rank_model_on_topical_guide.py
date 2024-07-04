@@ -1,3 +1,5 @@
+# Description: This file ranks the model on the topical guide. It takes the topical guide and the model's embeddings and ranks the model on the topical guide.
+#It uses a modified recall-at-k metric to determine the model's performance.
 import json
 import re
 import pandas as pd
@@ -8,7 +10,7 @@ from sklearn.preprocessing import normalize
 from sentence_transformers import SentenceTransformer, util
 import sys
 
-
+#Function to split the book and chapter
 def parseCosineSimilarityFileTopicalGuide(similarityFile, topicalGuide, allEmbeddingDF, outputFile):
 
     topics = list(topicalGuide.keys())
@@ -40,7 +42,7 @@ def parseCosineSimilarityFileTopicalGuide(similarityFile, topicalGuide, allEmbed
                 outFile.write("\n")
 
 
-
+#Function to create the cosine similarity file for the topical guide topic names against all verses
 def topicalGuides_topics_similarity(topicalGuidePath, model_type, topicsEmbedding, allEmbedding, similarityFile, standardWorksDF, parsedSimilarityFile):
     with open(topicalGuidePath, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -56,6 +58,7 @@ def topicalGuides_topics_similarity(topicalGuidePath, model_type, topicsEmbeddin
 
     parseCosineSimilarityFileTopicalGuide(similarityFile, topicalGuide, standardWorksDF, parsedSimilarityFile) #Takes some time
 
+#Function to analyze the success of the model on the topical guide
 def analyze_success(topicalGuideNoIndexPath, parsedSimilarityFile, outputFile):
     with open(topicalGuideNoIndexPath, "r") as readFile:
         topicalGuide = json.load(readFile)
@@ -91,6 +94,7 @@ def analyze_success(topicalGuideNoIndexPath, parsedSimilarityFile, outputFile):
 
     #         i+=1
 
+#Function to measure the accuracy of the model on the topical guide based on the recall-at-k metric
 def measure_accuracy(ranked_topical_guide):
 
     all_ranks = []
@@ -114,7 +118,7 @@ def measure_accuracy(ranked_topical_guide):
 
     return sum(all_ranks)/len(all_ranks)
 
-
+#Main function that combines the others to rank the model on the topical guide
 def rank_model(model_type, allEmbedding):
     standardWorksDF = "datasets/allWorks.csv"
     
@@ -132,6 +136,8 @@ def rank_model(model_type, allEmbedding):
     analyze_success(topicalGuideNoIndexPath, outputParsedFile, ranked_topical_guide)
     
     recallAtKScore = measure_accuracy(ranked_topical_guide)  
+
+    #Write the model's ranking to a file
     outputFile = "analysis/modelRankings"
     with open(outputFile, "a") as output:
         output.write(f"{allEmbedding}\ttraining\t{recallAtKScore}\n")

@@ -26,6 +26,7 @@ def concatenate_verses(df, x):
 
     return concatenated_verses
 
+# Define a function to calculate the weighted average of the embeddings
 def weighted_average(embeddings, mask_weights, weights):
     total_weight = sum([mask*weight[0] for mask, weight in zip(mask_weights, weights)])
     normalizer = 1/total_weight
@@ -34,6 +35,7 @@ def weighted_average(embeddings, mask_weights, weights):
     embeddings_array = np.stack(embeddings)
     return torch.from_numpy(np.average(embeddings_array, weights=updated_weights, axis=0))
 
+# Define a function to add context to the embeddings using a gaussian kernel
 def add_context_gaussian(embeddings, df, context_window):
     weights = getGaussianKernel(context_window*2+1, 1)
     embedding_dim = len(embeddings[0])
@@ -64,6 +66,7 @@ def add_context_gaussian(embeddings, df, context_window):
 
     return torch.stack(context_embeddings).float()
 
+# Define a function to embed the verses using the given model and save the embeddings to a tensor
 def create_tensor(model_type, tensor_path, df_path='datasets/allWorks.csv', verses='', context_window=0):
     model = SentenceTransformer(model_type)
     tokenizer = model.tokenizer

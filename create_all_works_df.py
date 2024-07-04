@@ -1,15 +1,16 @@
+# Description: This script creates a dataframe with all the works from the scriptures-json repository
 import pandas as pd
 import json
 import re
 from urllib.request import urlopen 
 
 #Found JSONs from https://github.com/bcbooks/scriptures-json
-
 works = ['old-testament','new-testament', 'book-of-mormon','doctrine-and-covenants','pearl-of-great-price']
 works_url = [f'https://raw.githubusercontent.com/bcbooks/scriptures-json/master/{work}.json' for work in works]
 
 df_list = []
 
+#Iterate through all the works, parses the JSON, and adds the verses to a dataframe
 for index, url in enumerate(works_url):
     response = urlopen(url) 
     # storing the JSON response  
@@ -54,6 +55,7 @@ for index, url in enumerate(works_url):
 
 df = pd.DataFrame(df_list)
 
+#Clean the verses
 def clean_verse(row):
 
     verse = row['Verse'].lower()

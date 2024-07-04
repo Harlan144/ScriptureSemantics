@@ -1,3 +1,4 @@
+# This file is used to calculate the cosine similarity between the verses of different works
 from sentence_transformers import SentenceTransformer, util
 import pandas as pd
 import numpy as np
@@ -22,9 +23,10 @@ def createCosineSimilarityFile(smallEmbeddingFile,allEmbeddingFile,outputFile, s
     # print(cosine_scores.shape) #These should match
     # print(len(smallEmbedding), len(allEmbedding))
     
+    #Find the top similarVerseCount verses for each verse.
     top_results = torch.topk(cosine_scores, k=similarVerseCount)
 
-
+    #Output the results to a file
     with open(outputFile,'w') as outFile:
         i  = 0    
         outFile.write("VerseIndex\tSimilarVerseIndex: CosineSimilarity\n")
@@ -36,7 +38,7 @@ def createCosineSimilarityFile(smallEmbeddingFile,allEmbeddingFile,outputFile, s
             outFile.write("\n")      
             i+=1
 
-
+#Parse the cosine similarity file to include the references of the verses
 def parseCosineSimilarityFile(similarityFile, smallEmbeddingDF, allEmbeddingDF, outputFile):
 
     smallEmbeddingDF = pd.read_csv(smallEmbeddingDF)
@@ -66,6 +68,7 @@ def parseCosineSimilarityFile(similarityFile, smallEmbeddingDF, allEmbeddingDF, 
 
                 outFile.write("\n")
 
+#Create the similarity files for the different embeddings
 def create_similarity_files(tensorEmbeddingPath, depth=25):
     standardWorksDF = "datasets/allWorks.csv"
 
@@ -78,7 +81,7 @@ def create_similarity_files(tensorEmbeddingPath, depth=25):
     parseCosineSimilarityFile(outputUnParsedFile,standardWorksDF,standardWorksDF,outputParsedFile)
 
 if __name__ == '__main__':
-
+    
     outputFile = "cosineSimilarity/unmapped/allSimilarVersesDepth25_with_punc"
     allEmbedding = "modelTensors/MiniLM_allWorks_embedding_with_punc.pt"
     createCosineSimilarityFile(allEmbedding,allEmbedding,outputFile, 25)

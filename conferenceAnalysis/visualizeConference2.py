@@ -1,3 +1,4 @@
+# Purpose: Visualize the change in scripture quotation over time using a scatter plot.
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,7 @@ percentDict = dict()
 for year in years:
     percentDict[year] = dict()
 
+# Iterate through all the files in the conferenceResults directory
 for file in os.listdir("conferenceAnalysis/conferenceResults"):
     if file.startswith("conferenceResults"):
         print(file)
@@ -37,6 +39,7 @@ for file in os.listdir("conferenceAnalysis/conferenceResults"):
             percentDict[year] = tmpDict
             specialPlot[year] = tmpDict
 
+# Create a dictionary of book percentages for each year
 year2 = sorted(list(specialPlot.keys()))
 book_percentages = {
     book: [specialPlot[year].get(book, 0) * 100 for year in year2] for book in specialPlot[1884]
